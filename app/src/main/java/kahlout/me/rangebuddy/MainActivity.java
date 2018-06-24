@@ -1,5 +1,7 @@
 package kahlout.me.rangebuddy;
 
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -10,6 +12,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.google.android.gms.maps.MapFragment;
 
 
 public class MainActivity extends AppCompatActivity
@@ -70,10 +73,22 @@ public class MainActivity extends AppCompatActivity
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        if (id == R.id.nav_map) {
-            // Maps
-        } else if (id == R.id.nav_settings) {
-            // Settings
+        Fragment myFragment = null;
+
+        switch (id) {
+            case R.id.nav_map:
+            myFragment = new Map_Fragment();
+            break;
+
+            case R.id.nav_settings:
+            break;
+        }
+
+        //replacing the fragment
+        if (myFragment != null) {
+            FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+            ft.replace(R.id.content_frame, myFragment);
+            ft.commit();
         }
 
         mDrawer = (DrawerLayout) findViewById(R.id.drawer_layout);
