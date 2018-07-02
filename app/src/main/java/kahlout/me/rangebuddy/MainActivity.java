@@ -77,7 +77,7 @@ public class MainActivity extends AppCompatActivity
 
         switch (id) {
             case R.id.nav_map:
-            myFragment = new Map_Fragment();
+            myFragment = new Map_Frag();
             break;
 
             case R.id.nav_settings:
