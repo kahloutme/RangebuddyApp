@@ -135,7 +135,7 @@ public class Map_Frag extends Fragment implements OnMapReadyCallback {
                             @Override
                             public void onClick(DialogInterface dialogInterface, int i) {
                                 //Prompt the user once explanation has been shown
-                                ActivityCompat.requestPermissions(getActivity(),
+                                requestPermissions(
                                         new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                                         MY_PERMISSIONS_REQUEST_LOCATION );
                             }
@@ -149,16 +149,12 @@ public class Map_Frag extends Fragment implements OnMapReadyCallback {
 //                ActivityCompat.requestPermissions(getActivity(),
 //                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
 //                        MY_PERMISSIONS_REQUEST_LOCATION );
-                ActivityCompat.requestPermissions(getActivity(),
+                requestPermissions(
                         new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                         MY_PERMISSIONS_REQUEST_LOCATION );
             }
         }
     }
-
-
-    // TODO: onRequestPermissionsResult is not being called in fragment. Instead called in activty.
-    // TODO:  issue is here --->>> ActivityCompat.requestPermissions(getActivity(),
 
 
     @Override
