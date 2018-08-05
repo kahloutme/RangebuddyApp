@@ -1,6 +1,8 @@
 package kahlout.me.rangebuddy;
 
 import android.Manifest;
+import android.app.Activity;
+import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -23,6 +25,7 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResponse;
+import com.google.android.gms.location.LocationSettingsStates;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.maps.GoogleMap;
@@ -52,7 +55,7 @@ public class Map_Frag extends Fragment implements OnMapReadyCallback {
     FusedLocationProviderClient mFusedLocationClient;
 
     // Settings variables
-    boolean mSettings;
+    public boolean mSettings;
 
 
     @Nullable
@@ -96,9 +99,21 @@ public class Map_Frag extends Fragment implements OnMapReadyCallback {
                             // user a dialog.
                             Toast.makeText(getActivity(), "Resolution required!", Toast.LENGTH_LONG).show();
 
-                            // TODO:   If we can fix, mSettings true. If not mSettings false.
+                            // TODO:   Wrong activity result being called.
 
+                            try {
+                                // Cast to a resolvable exception.
+                                ResolvableApiException resolvable = (ResolvableApiException) exception;
+                                // Show the dialog by calling startResolutionForResult(),
+                                // and check the result in onActivityResult().
+                                resolvable.startResolutionForResult(getActivity(), 999);
+                            } catch (IntentSender.SendIntentException e) {
+                                // Ignore the error.
+                            } catch (ClassCastException e) {
+                                // Ignore, should be an impossible error.
+                            }
                             break;
+
 
                         case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
                             // Location settings are not satisfied. However, we have no way to fix the
@@ -210,6 +225,29 @@ public class Map_Frag extends Fragment implements OnMapReadyCallback {
                 return;
             }
 
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        final LocationSettingsStates states = LocationSettingsStates.fromIntent(data);
+        switch (requestCode) {
+            case 999:
+                switch (resultCode) {
+                    case Activity.RESULT_OK:
+                        // All required changes were successfully made
+
+                        break;
+                    case Activity.RESULT_CANCELED:
+                        // The user was asked to change settings, but chose not to
+
+                        break;
+                    default:
+                        break;
+                }
+                break;
         }
     }
 
