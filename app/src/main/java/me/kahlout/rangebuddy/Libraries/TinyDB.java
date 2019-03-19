@@ -1,4 +1,4 @@
-package kahlout.me.rangebuddy.Libraries;
+package me.kahlout.rangebuddy.Libraries;
 
 /**
  * Created by malikahlout on 26/02/2017.

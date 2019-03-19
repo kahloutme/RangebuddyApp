@@ -1,7 +1,5 @@
-package kahlout.me.rangebuddy;
+package me.kahlout.rangebuddy;
 
-import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
@@ -23,26 +21,26 @@ public class MainActivity extends AppCompatActivity
     DrawerLayout mDrawer;
     NavigationView mNavigationView;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
-         setSupportActionBar(mToolbar);
-
+        setSupportActionBar(mToolbar);
 
 
         mDrawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, mDrawer, mToolbar,  R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+                this, mDrawer, mToolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         mDrawer.addDrawerListener(toggle);
         toggle.syncState();
 
         mNavigationView = (NavigationView) findViewById(R.id.nav_view);
         mNavigationView.setNavigationItemSelectedListener(this);
 
-       /// Set first screen
+        /// Set first screen
         displaySelectedScreen(R.id.nav_map);
     }
 
@@ -81,11 +79,16 @@ public class MainActivity extends AppCompatActivity
 
         switch (itemId) {
             case R.id.nav_map:
-            myFragment = new Map_Frag();
-            break;
+                myFragment = new MapFragment();
+                break;
+
+            case R.id.nav_premium:
+                myFragment = new PremiumFragment();
+                break;
 
             case R.id.nav_settings:
-            break;
+                myFragment = new SettingsFragment();
+                break;
         }
 
         //replacing the fragment
@@ -101,7 +104,6 @@ public class MainActivity extends AppCompatActivity
     }
 
 
-
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -111,17 +113,19 @@ public class MainActivity extends AppCompatActivity
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
+        /// Correct location settings results
+        if (requestCode == 999) {
 
-        /// When results are back they come to Activity instead of Fragment. Here we send them back.
-        Fragment frg = getSupportFragmentManager().findFragmentById(R.id.content_frame);
-        if (frg != null) {
-            frg.onActivityResult(requestCode, resultCode, data);
+            /// When results are back they come to Activity instead of Fragment. Here we send them back.
+            Fragment frg = getSupportFragmentManager().findFragmentById(R.id.content_frame);
+            if (frg != null) {
+                frg.onActivityResult(requestCode, resultCode, data);
+            }
         }
-
 
     }
 
-//// Relevant but not used methods
+    //// Relevant but not used methods
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {

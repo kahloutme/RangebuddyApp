@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="listviewSettings">
+        <item >Distance Units</item>
+        <item >Zoom Lock</item>
+        <item >Report Bug / Request Feature</item>
+        <item >Dev Twitter</item>
+    </string-array>
+</resources>

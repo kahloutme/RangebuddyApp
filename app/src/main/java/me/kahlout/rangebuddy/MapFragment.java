@@ -1,4 +1,4 @@
-package kahlout.me.rangebuddy;
+package me.kahlout.rangebuddy;
 
 import android.Manifest;
 import android.app.Activity;
@@ -36,7 +36,6 @@ import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResponse;
 import com.google.android.gms.location.LocationSettingsStates;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
-import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
@@ -54,13 +53,11 @@ import com.google.android.gms.tasks.Task;
 
 import java.util.List;
 
-import kahlout.me.rangebuddy.Libraries.DistanceMath;
-import kahlout.me.rangebuddy.Libraries.TinyDB;
-
-import static android.content.ContentValues.TAG;
+import me.kahlout.rangebuddy.Libraries.DistanceMath;
+import me.kahlout.rangebuddy.Libraries.TinyDB;
 
 
-public class Map_Frag extends Fragment implements OnMapReadyCallback {
+public class MapFragment extends Fragment implements OnMapReadyCallback {
 
     public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
 

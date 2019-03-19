@@ -1,4 +1,4 @@
-package kahlout.me.rangebuddy;
+package me.kahlout.rangebuddy;
 
 import org.junit.Test;
 

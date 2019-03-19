@@ -3,10 +3,10 @@ apply plugin: 'com.android.application'
 android {
     compileSdkVersion 26
     defaultConfig {
-        applicationId "kahlout.me.rangebuddy"
+        applicationId "me.kahlout.rangebuddy"
         minSdkVersion 21
         targetSdkVersion 26
-        versionCode 500
+        versionCode 45
         versionName "5.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
@@ -39,4 +39,7 @@ dependencies {
 
     // Google Ad's - Needs to be updated
     implementation 'com.google.android.gms:play-services-ads:11.6.0'
+
+    // Googling Billing
+    implementation 'com.android.billingclient:billing:1.2.2'
 }
