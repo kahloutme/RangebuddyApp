@@ -1,5 +1,7 @@
 package kahlout.me.rangebuddy;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
@@ -108,6 +110,13 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+
+
+        /// When results are back they come to Activity instead of Fragment. Here we send them back.
+        Fragment frg = getSupportFragmentManager().findFragmentById(R.id.content_frame);
+        if (frg != null) {
+            frg.onActivityResult(requestCode, resultCode, data);
+        }
 
 
     }

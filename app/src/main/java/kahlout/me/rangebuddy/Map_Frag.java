@@ -2,9 +2,14 @@ package kahlout.me.rangebuddy;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
@@ -16,6 +21,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.ads.AdRequest;
@@ -36,10 +43,19 @@ import com.google.android.gms.maps.SupportMapFragment;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
 import java.util.List;
+
+import kahlout.me.rangebuddy.Libraries.DistanceMath;
+import kahlout.me.rangebuddy.Libraries.TinyDB;
 
 import static android.content.ContentValues.TAG;
 
@@ -62,6 +78,24 @@ public class Map_Frag extends Fragment implements OnMapReadyCallback {
     ////Ad
     private AdView mAdView;
 
+    // Declare button and Distance Text
+    private Button mClearButton;
+    private TextView mTextView;
+
+    // Icon
+    private Bitmap MarkerIcon;
+
+    // Memory variable for line
+    private Polyline mline;
+
+    // Markers
+    private Marker mEndMarker;
+
+    // TinyDB
+    private TinyDB tinydb;
+
+    // Units of Measure from TinyDB
+    private int mUnits;
 
 
     @Nullable
@@ -71,24 +105,46 @@ public class Map_Frag extends Fragment implements OnMapReadyCallback {
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(getActivity());
 
-
         View view = inflater.inflate(R.layout.fragment_map, null, false);
         mapFrag = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.googleMap);
         mapFrag.getMapAsync(this);
 
-        ///Ad Testing
+        /// Screen elements
+        mClearButton = view.findViewById(R.id.Clear_Button);
+        mTextView = view.findViewById(R.id.Distance_Text);
 
+        ///Ad Testing
         mAdView = view.findViewById(R.id.adView);
         AdRequest adRequest = new AdRequest.Builder()
-                    .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
+                .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
                 .build();
         mAdView.loadAd(adRequest);
 
-        ///Ad Testing
 
         return view;
     }
 
+    @Override
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        // Create instance of TinyDB
+        tinydb = new TinyDB(getContext());
+
+
+        // Create Marker icon
+        int height = 100;
+        int width  = 100;
+        BitmapDrawable bitmapdraw = (BitmapDrawable) getResources().getDrawable(R.mipmap.marker_icon);
+        Bitmap b = bitmapdraw.getBitmap();
+        MarkerIcon = Bitmap.createScaledBitmap(b, width, height, false);
+
+        // TODO: Remove ads if user is premium.
+
+        // TODO: Change Log call
+
+
+    }
 
     public boolean LocationSettings() {
         mSettings = false;
@@ -106,9 +162,7 @@ public class Map_Frag extends Fragment implements OnMapReadyCallback {
                     mSettings = true;
 
 
-
-                }
-                catch (ApiException exception) {
+                } catch (ApiException exception) {
                     switch (exception.getStatusCode()) {
                         case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
                             // Location settings are not satisfied. But could be fixed by showing the
@@ -122,6 +176,7 @@ public class Map_Frag extends Fragment implements OnMapReadyCallback {
                                 ResolvableApiException resolvable = (ResolvableApiException) exception;
                                 // Show the dialog by calling startResolutionForResult(),
                                 // and check the result in onActivityResult().
+                                // Note: Comes back to MainActivity Resullts first.
                                 resolvable.startResolutionForResult(getActivity(), 999);
                             } catch (IntentSender.SendIntentException e) {
                                 // Ignore the error.
@@ -129,7 +184,6 @@ public class Map_Frag extends Fragment implements OnMapReadyCallback {
                                 // Ignore, should be an impossible error.
                             }
                             break;
-
 
                         case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
                             // Location settings are not satisfied. However, we have no way to fix the
@@ -147,13 +201,10 @@ public class Map_Frag extends Fragment implements OnMapReadyCallback {
     }
 
 
-
-
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mGoogleMap = googleMap;
         mGoogleMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
-
         mLocationRequest = new LocationRequest();
         mLocationRequest.setInterval(5000); // 5 second interval for highest accuracy
         mLocationRequest.setFastestInterval(5000);
@@ -162,8 +213,6 @@ public class Map_Frag extends Fragment implements OnMapReadyCallback {
 
         /// Check location settings
         LocationSettings();
-
-        // TODO: if location settings are ok carry on. 
 
         if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (ContextCompat.checkSelfPermission(getActivity(),
@@ -177,12 +226,84 @@ public class Map_Frag extends Fragment implements OnMapReadyCallback {
                 checkLocationPermission();
 
             }
-        }
-        else {
+        } else {
             mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
             mGoogleMap.setMyLocationEnabled(true);
         }
 
+
+        /// We are now actually ready at this point
+
+            /// Set minimum zoom to stop map jumping away
+            // TODO: 19/03/2019 Causing issue with map not loading until clicked. Removed.
+//            mGoogleMap.setMinZoomPreference(17f);
+
+            /**
+             *  Listener for clear polyline code
+             * */
+            mClearButton.setOnClickListener(new View.OnClickListener() {
+
+                @Override
+                public void onClick(View v) {
+
+                    if (mline != null) {
+                        mline.remove();
+                        mEndMarker.remove();
+                        mline = null;
+                        mTextView.setText("0");
+
+                        Log.i("MapsActivity", "This will clear the line");
+                    }
+                }
+            });
+
+
+            mGoogleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+
+                @Override
+                public void onMapClick(LatLng clickCoords) {
+
+                    mClearButton.performClick();
+
+                    mline = mGoogleMap.addPolyline(new PolylineOptions()
+                            .add(new LatLng(clickCoords.latitude, clickCoords.longitude), new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude()))
+                            .width(12)
+                            .color(Color.RED));
+
+                    String S = "String";
+
+                    mEndMarker = mGoogleMap.addMarker(new MarkerOptions()
+                            .position(new LatLng(clickCoords.latitude, clickCoords.longitude))
+                            .icon(BitmapDescriptorFactory.fromBitmap(MarkerIcon))
+
+                    );
+
+
+                    Log.i("MapsActivity", "Polyline added at " + clickCoords.latitude + " " + clickCoords.longitude);
+
+                    mUnits = tinydb.getIntUnits("UnitsToUse");
+
+                    if (mUnits == 0) {
+
+                        double calculatedDistance = DistanceMath.distanceYards(mLastLocation.getLatitude(), clickCoords.latitude, mLastLocation.getLongitude(), clickCoords.longitude, 0, 0);
+                        int DisplayDistance = (int) calculatedDistance;
+
+                        mTextView = (TextView) getView().findViewById(R.id.Distance_Text);
+                        mTextView.setText(DisplayDistance + "y");
+
+
+                    } else {
+
+                        double calculatedDistance = DistanceMath.distanceMeters(mLastLocation.getLatitude(), clickCoords.latitude, mLastLocation.getLongitude(), clickCoords.longitude, 0, 0);
+                        int DisplayDistance = (int) calculatedDistance;
+
+                        mTextView = (TextView) getView().findViewById(R.id.Distance_Text);
+                        mTextView.setText(DisplayDistance + "m");
+
+
+                    }
+                }
+            });
 
     }
 
@@ -205,8 +326,8 @@ public class Map_Frag extends Fragment implements OnMapReadyCallback {
                 != PackageManager.PERMISSION_GRANTED) {
 
             requestPermissions(
-                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                        MY_PERMISSIONS_REQUEST_LOCATION );
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    MY_PERMISSIONS_REQUEST_LOCATION);
 
         }
     }
@@ -236,7 +357,23 @@ public class Map_Frag extends Fragment implements OnMapReadyCallback {
 
                     // permission denied, boo! Disable the
                     // functionality that depends on this permission.
-                    Toast.makeText(getActivity(), "RangeBuddy requires location permission to function", Toast.LENGTH_LONG).show();
+                    AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                    //Source of the data in the Dialog
+
+                    // Set the dialog title
+                    builder.setTitle("Location Error")
+                            .setMessage("Cannot continue without Location Enabled")
+                            // Set the action buttons
+                            .setNeutralButton("Close App", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int id) {
+                                    getActivity().finish();
+                                    System.exit(0);
+                                }
+                            });
+
+                    AlertDialog alert = builder.create();
+                    alert.show();
                 }
                 return;
             }
@@ -257,7 +394,24 @@ public class Map_Frag extends Fragment implements OnMapReadyCallback {
 
                         break;
                     case Activity.RESULT_CANCELED:
-                        // The user was asked to change settings, but chose not to
+                        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                        //Source of the data in the Dialog
+
+                        // Set the dialog title
+                        builder.setTitle("Location Error")
+                                .setMessage("Cannot continue without Location Services Enabled")
+                                // Set the action buttons
+                                .setNeutralButton("Close App", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int id) {
+                                        getActivity().finish();
+                                        System.exit(0);
+                                    }
+                                });
+
+                        AlertDialog alert = builder.create();
+                        alert.show();
+
 
                         break;
                     default:
@@ -266,9 +420,6 @@ public class Map_Frag extends Fragment implements OnMapReadyCallback {
                 break;
         }
     }
-
-
-
 
 
 }
