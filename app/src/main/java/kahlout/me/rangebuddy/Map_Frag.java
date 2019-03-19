@@ -97,6 +97,9 @@ public class Map_Frag extends Fragment implements OnMapReadyCallback {
     // Units of Measure from TinyDB
     private int mUnits;
 
+    //Premium User Flag
+    private boolean mPremium;
+
 
     @Nullable
     @Override
@@ -139,9 +142,17 @@ public class Map_Frag extends Fragment implements OnMapReadyCallback {
         Bitmap b = bitmapdraw.getBitmap();
         MarkerIcon = Bitmap.createScaledBitmap(b, width, height, false);
 
-        // TODO: Remove ads if user is premium.
 
-        // TODO: Change Log call
+        // Hide Ads if premium
+        mPremium = tinydb.getBoolean("Premium");
+        if(mPremium){
+            if(mAdView != null){
+                mAdView.destroy();
+                mAdView.setVisibility(View.GONE);
+            }
+        }
+
+        // TODO: 19/03/2019 Add a Change log record
 
 
     }
@@ -169,14 +180,12 @@ public class Map_Frag extends Fragment implements OnMapReadyCallback {
                             // user a dialog.
                             Toast.makeText(getActivity(), "Resolution required!", Toast.LENGTH_LONG).show();
 
-                            // TODO:   Wrong activity result being called.
-
                             try {
                                 // Cast to a resolvable exception.
                                 ResolvableApiException resolvable = (ResolvableApiException) exception;
                                 // Show the dialog by calling startResolutionForResult(),
                                 // and check the result in onActivityResult().
-                                // Note: Comes back to MainActivity Resullts first.
+                                // Note: Comes back to MainActivity Results first.
                                 resolvable.startResolutionForResult(getActivity(), 999);
                             } catch (IntentSender.SendIntentException e) {
                                 // Ignore the error.
