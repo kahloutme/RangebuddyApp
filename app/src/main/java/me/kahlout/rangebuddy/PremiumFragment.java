@@ -29,8 +29,9 @@ public class PremiumFragment extends Fragment implements PurchasesUpdatedListene
 
     private TinyDB tinydb;
     private Button mBuyButton;
-    private String mAdRemovalPrice;
 
+    //Premium User Flag
+    private boolean mPremium;
 
     // In-app products.
     static final String ITEM_SKU_ADREMOVAL = "rb_remove_ads";
@@ -41,19 +42,28 @@ public class PremiumFragment extends Fragment implements PurchasesUpdatedListene
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        //returning our layout file
-        //change R.layout.yourlayoutfilename for each of your fragments
 
         View view = inflater.inflate(R.layout.fragment_premium, container, false);
 
-        // TODO: 19/03/2019  tinydb reference
+        // Create instance of TinyDB
+        tinydb = new TinyDB(getContext());
+        mPremium = tinydb.getBoolean("Premium");
+
+        // Button
+        mBuyButton = view.findViewById(R.id.buyButton);
+
+
         // Establish connection to billing client
         mBillingClient = BillingClient.newBuilder(getContext()).setListener(this).build();
+
+        // Connect to billing server
         mBillingClient.startConnection(new BillingClientStateListener() {
             @Override
             public void onBillingSetupFinished(@BillingClient.BillingResponse int billingResponseCode) {
                 if (billingResponseCode == BillingClient.BillingResponse.OK) {
                     // The billing client is ready. You can query purchases here.
+                    queryPurchases();
+//                    queryPrefPurchases();
 
                 }
             }
@@ -64,11 +74,21 @@ public class PremiumFragment extends Fragment implements PurchasesUpdatedListene
                 Toast.makeText(getContext(), getResources().getString(R.string.billing_connection_failure), Toast.LENGTH_SHORT);
                 // Try to restart the connection on the next request to
                 // Google Play by calling the startConnection() method.
+//                queryPrefPurchases();
             }
         });
 
 
-        mBuyButton = view.findViewById(R.id.buyButton);
+        return view;
+    }
+
+
+    @Override
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        //you can set the title for your toolbar here for different fragments different titles
+        getActivity().setTitle("Premium");
 
         mBuyButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -83,36 +103,18 @@ public class PremiumFragment extends Fragment implements PurchasesUpdatedListene
             }
         });
 
-        // Query purchases incase a user is connecting from a different device and they've already purchased the app
-        queryPurchases();
-        queryPrefPurchases();
-
-
-        return view;
-    }
-
-
-    @Override
-    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-
-        //you can set the title for your toolbar here for different fragments different titles
-        getActivity().setTitle("Premium");
-
 
     }
 
     private void queryPrefPurchases() {
-//        Boolean adFree = mSharedPreferences.getBoolean(getResources().getString(R.string.pref_remove_ads_key), false);
-//        if (adFree) {
-//            mBuyButton.setText(getResources().getString(R.string.pref_ad_removal_purchased));
-//            mBuyButton.setEnabled(false);
-//        }
+        if (mPremium) {
+            mBuyButton.setText(getResources().getString(R.string.pref_ad_removal_purchased));
+            mBuyButton.setEnabled(false);
+        }
     }
 
+    //Used if purchases ever need to be queried in the future
     private void queryPurchases() {
-
-        //Method not being used for now, but can be used if purchases ever need to be queried in the future
         Purchase.PurchasesResult purchasesResult = mBillingClient.queryPurchases(BillingClient.SkuType.INAPP);
         if (purchasesResult != null) {
             List<Purchase> purchasesList = purchasesResult.getPurchasesList();
@@ -122,12 +124,9 @@ public class PremiumFragment extends Fragment implements PurchasesUpdatedListene
             if (!purchasesList.isEmpty()) {
                 for (Purchase purchase : purchasesList) {
                     if (purchase.getSku().equals(ITEM_SKU_ADREMOVAL)) {
-
-                        // TODO: 19/03/2019  remove ad's
-//                        mSharedPreferences.edit().putBoolean(getResources().getString(R.string.pref_remove_ads_key), true).commit();
-//                        setAdFree(true);
-//                        mBuyButton.setText(getResources().getString(R.string.pref_ad_removal_purchased));
-//                        mBuyButton.setEnabled(false);
+                        tinydb.putBoolean("Premium", true);
+                        mBuyButton.setText(getResources().getString(R.string.pref_ad_removal_purchased));
+                        mBuyButton.setEnabled(false);
                     }
                 }
             }
@@ -137,10 +136,9 @@ public class PremiumFragment extends Fragment implements PurchasesUpdatedListene
 
     private void handlePurchase(Purchase purchase) {
         if (purchase.getSku().equals(ITEM_SKU_ADREMOVAL)) {
-//            mSharedPreferences.edit().putBoolean(getResources().getString(R.string.pref_remove_ads_key), true).commit();
-//            setAdFree(true);
-//            mBuyButton.setText(getResources().getString(R.string.pref_ad_removal_purchased));
-//            mBuyButton.setEnabled(false);
+            tinydb.putBoolean("Premium", true);
+            mBuyButton.setText(getResources().getString(R.string.pref_ad_removal_purchased));
+            mBuyButton.setEnabled(false);
         }
     }
 
@@ -161,10 +159,9 @@ public class PremiumFragment extends Fragment implements PurchasesUpdatedListene
             // Handle an error caused by a user cancelling the purchase flow.
             Log.d(TAG, "User Canceled" + responseCode);
         } else if (responseCode == BillingClient.BillingResponse.ITEM_ALREADY_OWNED) {
-//            mSharedPreferences.edit().putBoolean(getResources().getString(R.string.pref_remove_ads_key), true).commit();
-//            setAdFree(true);
-//            mBuyButton.setText(getResources().getString(R.string.pref_ad_removal_purchased));
-//            mBuyButton.setEnabled(false);
+              tinydb.putBoolean("Premium", true);
+            mBuyButton.setText(getResources().getString(R.string.pref_ad_removal_purchased));
+            mBuyButton.setEnabled(false);
         } else {
             Log.d(TAG, "Other code" + responseCode);
             // Handle any other error codes.

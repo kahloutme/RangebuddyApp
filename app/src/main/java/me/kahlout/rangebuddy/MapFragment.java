@@ -36,6 +36,7 @@ import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResponse;
 import com.google.android.gms.location.LocationSettingsStates;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
@@ -97,6 +98,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     //Premium User Flag
     private boolean mPremium;
 
+    // Do we have location?
+    boolean mLocationFirstUpdate = false;
+
 
     @Nullable
     @Override
@@ -134,7 +138,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
         // Create Marker icon
         int height = 100;
-        int width  = 100;
+        int width = 100;
         BitmapDrawable bitmapdraw = (BitmapDrawable) getResources().getDrawable(R.mipmap.marker_icon);
         Bitmap b = bitmapdraw.getBitmap();
         MarkerIcon = Bitmap.createScaledBitmap(b, width, height, false);
@@ -142,8 +146,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
         // Hide Ads if premium
         mPremium = tinydb.getBoolean("Premium");
-        if(mPremium){
-            if(mAdView != null){
+        if (mPremium) {
+            if (mAdView != null) {
                 mAdView.destroy();
                 mAdView.setVisibility(View.GONE);
             }
@@ -240,78 +244,72 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
         /// We are now actually ready at this point
 
-            /// Set minimum zoom to stop map jumping away
-            // TODO: 19/03/2019 Causing issue with map not loading until clicked. Removed.
-//            mGoogleMap.setMinZoomPreference(17f);
+        mClearButton.setOnClickListener(new View.OnClickListener() {
 
-            /**
-             *  Listener for clear polyline code
-             * */
-            mClearButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
 
-                @Override
-                public void onClick(View v) {
+                if (mline != null) {
+                    mline.remove();
+                    mEndMarker.remove();
+                    mline = null;
+                    mTextView.setText("0");
 
-                    if (mline != null) {
-                        mline.remove();
-                        mEndMarker.remove();
-                        mline = null;
-                        mTextView.setText("0");
-
-                        Log.i("MapsActivity", "This will clear the line");
-                    }
+                    Log.i("MapsActivity", "This will clear the line");
                 }
-            });
+            }
+        });
 
 
-            mGoogleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+        mGoogleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
 
-                @Override
-                public void onMapClick(LatLng clickCoords) {
+            @Override
+            public void onMapClick(LatLng clickCoords) {
 
-                    mClearButton.performClick();
+                mClearButton.performClick();
 
-                    mline = mGoogleMap.addPolyline(new PolylineOptions()
-                            .add(new LatLng(clickCoords.latitude, clickCoords.longitude), new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude()))
-                            .width(12)
-                            .color(Color.RED));
+                mline = mGoogleMap.addPolyline(new PolylineOptions()
+                        .add(new LatLng(clickCoords.latitude, clickCoords.longitude), new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude()))
+                        .width(12)
+                        .color(Color.RED));
 
-                    String S = "String";
+                String S = "String";
 
-                    mEndMarker = mGoogleMap.addMarker(new MarkerOptions()
-                            .position(new LatLng(clickCoords.latitude, clickCoords.longitude))
-                            .icon(BitmapDescriptorFactory.fromBitmap(MarkerIcon))
+                mEndMarker = mGoogleMap.addMarker(new MarkerOptions()
+                        .position(new LatLng(clickCoords.latitude, clickCoords.longitude))
+                        .icon(BitmapDescriptorFactory.fromBitmap(MarkerIcon))
 
-                    );
-
-
-                    Log.i("MapsActivity", "Polyline added at " + clickCoords.latitude + " " + clickCoords.longitude);
-
-                    mUnits = tinydb.getIntUnits("UnitsToUse");
-
-                    if (mUnits == 0) {
-
-                        double calculatedDistance = DistanceMath.distanceYards(mLastLocation.getLatitude(), clickCoords.latitude, mLastLocation.getLongitude(), clickCoords.longitude, 0, 0);
-                        int DisplayDistance = (int) calculatedDistance;
-
-                        mTextView = (TextView) getView().findViewById(R.id.Distance_Text);
-                        mTextView.setText(DisplayDistance + "y");
+                );
 
 
-                    } else {
+                Log.i("MapsActivity", "Polyline added at " + clickCoords.latitude + " " + clickCoords.longitude);
 
-                        double calculatedDistance = DistanceMath.distanceMeters(mLastLocation.getLatitude(), clickCoords.latitude, mLastLocation.getLongitude(), clickCoords.longitude, 0, 0);
-                        int DisplayDistance = (int) calculatedDistance;
+                mUnits = tinydb.getIntUnits("UnitsToUse");
 
-                        mTextView = (TextView) getView().findViewById(R.id.Distance_Text);
-                        mTextView.setText(DisplayDistance + "m");
+                if (mUnits == 0) {
+
+                    double calculatedDistance = DistanceMath.distanceYards(mLastLocation.getLatitude(), clickCoords.latitude, mLastLocation.getLongitude(), clickCoords.longitude, 0, 0);
+                    int DisplayDistance = (int) calculatedDistance;
+
+                    mTextView = (TextView) getView().findViewById(R.id.Distance_Text);
+                    mTextView.setText(DisplayDistance + "yd");
 
 
-                    }
+                } else {
+
+                    double calculatedDistance = DistanceMath.distanceMeters(mLastLocation.getLatitude(), clickCoords.latitude, mLastLocation.getLongitude(), clickCoords.longitude, 0, 0);
+                    int DisplayDistance = (int) calculatedDistance;
+
+                    mTextView = (TextView) getView().findViewById(R.id.Distance_Text);
+                    mTextView.setText(DisplayDistance + "m");
+
+
                 }
-            });
+            }
+        });
 
     }
+
 
     LocationCallback mLocationCallback = new LocationCallback() {
         @Override
@@ -322,10 +320,28 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
                 Location location = locationList.get(locationList.size() - 1);
                 mLastLocation = location;
 
+                if (!mLocationFirstUpdate) {
+                    FirstLocationUpdate();
+                    mLocationFirstUpdate = true;
+                }
+
+
                 Log.i("MapsActivity", "Location: " + location.getLatitude() + " " + location.getLongitude());
             }
         }
     };
+
+    public void FirstLocationUpdate() {
+
+        mGoogleMap.setMinZoomPreference(17f);
+        double currentLatitude = mLastLocation.getLatitude();
+        double currentLongitude = mLastLocation.getLongitude();
+        LatLng latLng = new LatLng(currentLatitude, currentLongitude);
+        mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 17f));
+
+
+    }
+
 
     private void checkLocationPermission() {
         if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION)

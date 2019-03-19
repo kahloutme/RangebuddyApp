@@ -14,12 +14,17 @@ import android.support.v7.widget.Toolbar;
 
 import android.view.MenuItem;
 
+import com.google.firebase.analytics.FirebaseAnalytics;
+
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     Toolbar mToolbar;
     DrawerLayout mDrawer;
     NavigationView mNavigationView;
+
+    // Firebase Analytics
+    private FirebaseAnalytics mFirebaseAnalytics;
 
 
     @Override
@@ -39,6 +44,9 @@ public class MainActivity extends AppCompatActivity
 
         mNavigationView = (NavigationView) findViewById(R.id.nav_view);
         mNavigationView.setNavigationItemSelectedListener(this);
+
+        // Obtain the FirebaseAnalytics instance.
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
 
         /// Set first screen
         displaySelectedScreen(R.id.nav_map);
