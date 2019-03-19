@@ -1,15 +1,73 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    xmlns:ads="http://schemas.android.com/apk/res-auto">
 
-    <fragment
+
+    <fragment xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
         android:id="@+id/googleMap"
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:layout_above="@+id/adView"
+        tools:context="me.kahlout.rangebuddy.MapFragment" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:id="@+id/Layout1"
+        android:weightSum="1">
+        <Button
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="@mipmap/ic_delete_forever_white_24dp"
+            android:id="@+id/Clear_Button"/>
 
 
-</android.support.constraint.ConstraintLayout>
+    </LinearLayout>
+
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_below="@+id/Layout1"
+        android:weightSum="1">
+
+
+        <TextView
+            android:text="0"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/Distance_Text"
+            android:gravity="right"
+            android:textSize="36sp"
+            android:textColor="@color/fbutton_color_clouds"
+            android:elevation="0dp"
+            android:paddingRight="20dp"
+            android:paddingTop="20dp"
+            android:textStyle="normal|bold"
+            />
+
+
+    </LinearLayout>
+
+
+    <com.google.android.gms.ads.AdView
+        android:id="@+id/adView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentBottom="true"
+        ads:adSize="BANNER"
+        ads:adUnitId="@string/bannerAd">
+    </com.google.android.gms.ads.AdView>
+
+
+</RelativeLayout>
+
+

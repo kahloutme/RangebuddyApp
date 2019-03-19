@@ -18,6 +18,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.LocationCallback;
@@ -57,6 +59,10 @@ public class Map_Frag extends Fragment implements OnMapReadyCallback {
     // Settings variables
     public boolean mSettings;
 
+    ////Ad
+    private AdView mAdView;
+
+
 
     @Nullable
     @Override
@@ -69,6 +75,16 @@ public class Map_Frag extends Fragment implements OnMapReadyCallback {
         View view = inflater.inflate(R.layout.fragment_map, null, false);
         mapFrag = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.googleMap);
         mapFrag.getMapAsync(this);
+
+        ///Ad Testing
+
+        mAdView = view.findViewById(R.id.adView);
+        AdRequest adRequest = new AdRequest.Builder()
+                    .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
+                .build();
+        mAdView.loadAd(adRequest);
+
+        ///Ad Testing
 
         return view;
     }

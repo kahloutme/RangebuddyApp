@@ -36,4 +36,7 @@ dependencies {
     // Google maps services
     implementation 'com.google.android.gms:play-services-maps:11.6.0'
     implementation "com.google.android.gms:play-services-location:11.6.0"
+
+    // Google Ad's - Needs to be updated
+    implementation 'com.google.android.gms:play-services-ads:11.6.0'
 }

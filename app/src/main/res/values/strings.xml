@@ -8,6 +8,9 @@
     /// My Stings
     <string name="google_maps_key" templateMergeStrategy="preserve" translatable="false">AIzaSyC3G8BZE5Jk7XhM0NJpe8JpKFBzY146sM8</string>
 
+    <!--AdMob ID-->
+    <string name="bannerAd">ca-app-pub-2575425775754389/2525773951</string>
+
 
     <string name="latitude_label">Latitude</string>
     <string name="longitude_label">Longitude</string>

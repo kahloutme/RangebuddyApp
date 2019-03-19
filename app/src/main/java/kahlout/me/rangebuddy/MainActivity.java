@@ -11,11 +11,8 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.Menu;
+
 import android.view.MenuItem;
-
-import com.google.android.gms.maps.MapFragment;
-
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -42,6 +39,9 @@ public class MainActivity extends AppCompatActivity
 
         mNavigationView = (NavigationView) findViewById(R.id.nav_view);
         mNavigationView.setNavigationItemSelectedListener(this);
+
+       /// Set first screen
+        displaySelectedScreen(R.id.nav_map);
     }
 
     @Override
@@ -70,14 +70,14 @@ public class MainActivity extends AppCompatActivity
         return super.onOptionsItemSelected(item);
     }
 
-    @Override
-    public boolean onNavigationItemSelected(MenuItem item) {
+
+    public boolean displaySelectedScreen(int itemId) {
         // Handle navigation view item clicks here.
-        int id = item.getItemId();
+//        int id = item.getItemId();
 
         Fragment myFragment = null;
 
-        switch (id) {
+        switch (itemId) {
             case R.id.nav_map:
             myFragment = new Map_Frag();
             break;
@@ -98,6 +98,8 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
+
+
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -109,4 +111,16 @@ public class MainActivity extends AppCompatActivity
 
 
     }
+
+//// Relevant but not used methods
+    @SuppressWarnings("StatementWithEmptyBody")
+    @Override
+    public boolean onNavigationItemSelected(MenuItem item) {
+
+        //calling the method displayselectedscreen and passing the id of selected menu
+        displaySelectedScreen(item.getItemId());
+        return true;
+    }
+
+
 }
