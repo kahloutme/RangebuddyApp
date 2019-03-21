@@ -120,7 +120,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         ///Ad Testing
         mAdView = view.findViewById(R.id.adView);
         AdRequest adRequest = new AdRequest.Builder()
-                .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
+//                .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
                 .build();
         mAdView.loadAd(adRequest);
 
@@ -131,6 +131,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        //you can set the title for your toolbar here for different fragments different titles
+        getActivity().setTitle("RangeBuddy");
 
         // Create instance of TinyDB
         tinydb = new TinyDB(getContext());

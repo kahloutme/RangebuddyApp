@@ -1,4 +1,6 @@
 apply plugin: 'com.android.application'
+apply plugin: 'io.fabric'
+apply plugin: 'com.google.gms.google-services'
 
 android {
     compileSdkVersion 27
@@ -6,7 +8,7 @@ android {
         applicationId "me.kahlout.rangebuddy"
         minSdkVersion 21
         targetSdkVersion 27
-        versionCode 45
+        versionCode 46
         versionName "5.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
@@ -29,8 +31,10 @@ dependencies {
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
 }
 
+
     /// My gradle changes
 dependencies {
+
     // Get rid of compat issue with 26.1.0
     implementation 'com.android.support:support-annotations:28.0.0'
     // Google maps services
