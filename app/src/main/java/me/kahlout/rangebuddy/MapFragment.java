@@ -14,7 +14,9 @@ import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Looper;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
@@ -27,9 +29,12 @@ import android.widget.Toast;
 
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
+import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationSettingsRequest;
@@ -51,25 +56,28 @@ import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.gun0912.tedpermission.PermissionListener;
+import com.gun0912.tedpermission.TedPermission;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import me.kahlout.rangebuddy.Libraries.DistanceMath;
 import me.kahlout.rangebuddy.Libraries.TinyDB;
 
 
-public class MapFragment extends Fragment implements OnMapReadyCallback {
-
-    public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
+public class MapFragment extends Fragment implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener, LocationListener {
 
     // location variables
 
     GoogleMap mGoogleMap;
     SupportMapFragment mapFrag;
-    LocationRequest mLocationRequest;
     Location mLastLocation;
-    FusedLocationProviderClient mFusedLocationClient;
-
+    public static double current_lat=0, current_lon=0,clicked_lat=0,clicked_lon=0;
+    GoogleApiClient googleApiClient;
+    private LocationRequest locationRequest;
+    private static final long UPDATE_INTERVAL = 5000, FASTEST_INTERVAL = 5000; // = 5 seconds
     // Settings variables
     public boolean mSettings;
 
@@ -107,7 +115,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 
 
-        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(getActivity());
 
         View view = inflater.inflate(R.layout.fragment_map, null, false);
         mapFrag = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.googleMap);
@@ -133,10 +140,10 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         super.onViewCreated(view, savedInstanceState);
 
         //you can set the title for your toolbar here for different fragments different titles
-        getActivity().setTitle("RangeBuddy");
+        MainActivity.getActivity().setTitle("RangeBuddy");
 
         // Create instance of TinyDB
-        tinydb = new TinyDB(getContext());
+        tinydb = new TinyDB(MainActivity.getActivity());
 
 
         // Create Marker icon
@@ -160,13 +167,60 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
 
     }
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+        //This is google maps api connection callback,here we will have current location
 
+        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
+
+        if (mLastLocation != null) {
+            current_lat = mLastLocation.getLatitude();
+            current_lon = mLastLocation.getLongitude();
+        }
+        Log.d("onConnected","connected " + current_lat + "  " + current_lon);
+
+        startLocationUpdates();
+    }
+    @Override
+    public void onConnectionSuspended(int i) {
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+    }
+
+
+    //Here we setup location updates request
+    private void startLocationUpdates() {
+        locationRequest = new LocationRequest();
+        //We will set HIGHT ACCURANCY priority and request every location update
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        locationRequest.setInterval(UPDATE_INTERVAL);
+        locationRequest.setFastestInterval(FASTEST_INTERVAL);
+        LocationSettings();
+
+
+
+        LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, this);
+    }
+
+
+    @Override
+    public void onLocationChanged(Location location) {
+        Log.d("onLocationChanged",""+location);
+        if (location != null) {
+
+            current_lat = location.getLatitude();
+            current_lon = location.getLongitude();
+            LocationUpdate();
+        }
+    }
     public boolean LocationSettings() {
         mSettings = false;
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
-                .addLocationRequest(mLocationRequest);
+                .addLocationRequest(locationRequest);
         Task<LocationSettingsResponse> result =
-                LocationServices.getSettingsClient(getActivity()).checkLocationSettings(builder.build());
+                LocationServices.getSettingsClient(MainActivity.getActivity()).checkLocationSettings(builder.build());
 
         result.addOnCompleteListener(new OnCompleteListener<LocationSettingsResponse>() {
             @Override
@@ -182,7 +236,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
                         case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
                             // Location settings are not satisfied. But could be fixed by showing the
                             // user a dialog.
-                            Toast.makeText(getActivity(), "Resolution required!", Toast.LENGTH_LONG).show();
+                            Toast.makeText(MainActivity.getActivity(), "Resolution required!", Toast.LENGTH_LONG).show();
 
                             try {
                                 // Cast to a resolvable exception.
@@ -190,7 +244,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
                                 // Show the dialog by calling startResolutionForResult(),
                                 // and check the result in onActivityResult().
                                 // Note: Comes back to MainActivity Results first.
-                                resolvable.startResolutionForResult(getActivity(), 999);
+                                resolvable.startResolutionForResult(MainActivity.getActivity(), 999);
                             } catch (IntentSender.SendIntentException e) {
                                 // Ignore the error.
                             } catch (ClassCastException e) {
@@ -218,31 +272,57 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     public void onMapReady(GoogleMap googleMap) {
         mGoogleMap = googleMap;
         mGoogleMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
-        mLocationRequest = new LocationRequest();
-        mLocationRequest.setInterval(5000); // 5 second interval for highest accuracy
-        mLocationRequest.setFastestInterval(5000);
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        Log.d("onMapReady","ready");
+        // Check location settings
+        //Here we will use Ted permissions library, so can rid of a lot of code such a onRequestPermissionsResult callback
+
+            PermissionListener permissionListener = new PermissionListener() {
+                @Override
+                public void onPermissionGranted() {
+
+                    mGoogleMap.setMyLocationEnabled(true);
+                    // we build google api client
+                    googleApiClient = new GoogleApiClient.Builder(MainActivity.getActivity()).
+                            addApi(LocationServices.API).
+                            addConnectionCallbacks(MapFragment.this).
+                            addOnConnectionFailedListener(MapFragment.this).build();
+                    if (googleApiClient != null) {
+                        googleApiClient.connect();
+                    }
+                    Log.d("onMapReady","has permission");
+
+                }
+
+                @Override
+                public void onPermissionDenied(ArrayList<String> deniedPermissions) {
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.getActivity());
+                    //Source of the data in the Dialog
+
+                    // Set the dialog title
+                    builder.setTitle("Location Error")
+                            .setMessage("Cannot continue without Location Enabled")
+                            // Set the action buttons
+                            .setNeutralButton("Close App", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int id) {
+                                    MainActivity.getActivity().finish();
+                                    System.exit(0);
+                                }
+                            });
+
+                    AlertDialog alert = builder.create();
+                    alert.show();
+                }
+            };
+            TedPermission.with(MainActivity.getActivity())
+                    .setPermissionListener(permissionListener)
+                    .setPermissions(Manifest.permission.ACCESS_FINE_LOCATION)
+
+                    .check();
 
 
-        /// Check location settings
-        LocationSettings();
-
-        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (ContextCompat.checkSelfPermission(getActivity(),
-                    Manifest.permission.ACCESS_FINE_LOCATION)
-                    == PackageManager.PERMISSION_GRANTED) {
-                //Location Permission already granted
-                mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
-                mGoogleMap.setMyLocationEnabled(true);
-            } else {
-                //Request Location Permission
-                checkLocationPermission();
-
-            }
-        } else {
-            mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
-            mGoogleMap.setMyLocationEnabled(true);
-        }
 
 
         /// We are now actually ready at this point
@@ -251,7 +331,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
             @Override
             public void onClick(View v) {
-
+                //Clear clicked coordinates
+                clicked_lat = 0;
+                clicked_lon = 0;
                 if (mline != null) {
                     mline.remove();
                     mEndMarker.remove();
@@ -270,147 +352,73 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
             public void onMapClick(LatLng clickCoords) {
 
                 mClearButton.performClick();
+                //we assign value to variables, so we could use them again in some other place, for example in location update
+                clicked_lat = clickCoords.latitude;
+                clicked_lon = clickCoords.longitude;
 
                 mline = mGoogleMap.addPolyline(new PolylineOptions()
-                        .add(new LatLng(clickCoords.latitude, clickCoords.longitude), new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude()))
+                        .add(new LatLng(clicked_lat, clicked_lon), new LatLng(current_lat, current_lon))
                         .width(12)
                         .color(Color.RED));
-
-                String S = "String";
-
                 mEndMarker = mGoogleMap.addMarker(new MarkerOptions()
-                        .position(new LatLng(clickCoords.latitude, clickCoords.longitude))
+                        .position(new LatLng(clicked_lat, clicked_lon))
                         .icon(BitmapDescriptorFactory.fromBitmap(MarkerIcon))
-
                 );
-
+                calc_distance();
 
                 Log.i("MapsActivity", "Polyline added at " + clickCoords.latitude + " " + clickCoords.longitude);
-
-                mUnits = tinydb.getIntUnits("UnitsToUse");
-
-                if (mUnits == 0) {
-
-                    double calculatedDistance = DistanceMath.distanceYards(mLastLocation.getLatitude(), clickCoords.latitude, mLastLocation.getLongitude(), clickCoords.longitude, 0, 0);
-                    int DisplayDistance = (int) calculatedDistance;
-
-                    mTextView = (TextView) getView().findViewById(R.id.Distance_Text);
-                    mTextView.setText(DisplayDistance + "yd");
-
-
-                } else {
-
-                    double calculatedDistance = DistanceMath.distanceMeters(mLastLocation.getLatitude(), clickCoords.latitude, mLastLocation.getLongitude(), clickCoords.longitude, 0, 0);
-                    int DisplayDistance = (int) calculatedDistance;
-
-                    mTextView = (TextView) getView().findViewById(R.id.Distance_Text);
-                    mTextView.setText(DisplayDistance + "m");
-
-
-                }
             }
         });
 
     }
+    public void calc_distance()
+    {
+        mUnits = tinydb.getIntUnits("UnitsToUse");
 
-
-    LocationCallback mLocationCallback = new LocationCallback() {
-        @Override
-        public void onLocationResult(LocationResult locationResult) {
-            List<Location> locationList = locationResult.getLocations();
-            if (locationList.size() > 0) {
-                //The last location in the list is the newest
-                Location location = locationList.get(locationList.size() - 1);
-                mLastLocation = location;
-
-                if (!mLocationFirstUpdate) {
-                    FirstLocationUpdate();
-                    mLocationFirstUpdate = true;
-                }
-
-
-                Log.i("MapsActivity", "Location: " + location.getLatitude() + " " + location.getLongitude());
-            }
+        if (mUnits == 0) {
+            double calculatedDistance = DistanceMath.distanceYards(clicked_lat, current_lat, clicked_lon, current_lon, 0, 0);
+            int DisplayDistance = (int) calculatedDistance;
+            mTextView = (TextView) getView().findViewById(R.id.Distance_Text);
+            mTextView.setText(DisplayDistance + "yd");
+        } else {
+            double calculatedDistance = DistanceMath.distanceMeters(clicked_lat, current_lat, clicked_lon, current_lon, 0, 0);
+            int DisplayDistance = (int) calculatedDistance;
+            mTextView = (TextView) getView().findViewById(R.id.Distance_Text);
+            mTextView.setText(DisplayDistance + "m");
         }
-    };
+    }
 
-    public void FirstLocationUpdate() {
 
+    public void LocationUpdate() {
         mGoogleMap.setMinZoomPreference(17f);
-        double currentLatitude = mLastLocation.getLatitude();
-        double currentLongitude = mLastLocation.getLongitude();
-        LatLng latLng = new LatLng(currentLatitude, currentLongitude);
+        LatLng latLng = new LatLng(current_lat, current_lon);
         mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 17f));
+        if(clicked_lat!=0 && clicked_lon!=0) {
+            //Now when the person is moving and updating his current location, the distance will be recalculated
+            // We will clear the poliline and redraw the line again, So the line will be following current position
+            if (mline != null) {
+                mline.remove();
+                mline = null;
 
-
-    }
-
-
-    private void checkLocationPermission() {
-        if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-
-            requestPermissions(
-                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                    MY_PERMISSIONS_REQUEST_LOCATION);
-
-        }
-    }
-
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           String permissions[], int[] grantResults) {
-        switch (requestCode) {
-            case MY_PERMISSIONS_REQUEST_LOCATION: {
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
-                    // permission was granted, yay! Do the
-                    // location-related task you need to do.
-                    if (ContextCompat.checkSelfPermission(getActivity(),
-                            Manifest.permission.ACCESS_FINE_LOCATION)
-                            == PackageManager.PERMISSION_GRANTED) {
-
-                        mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
-                        mGoogleMap.setMyLocationEnabled(true);
-                        Toast.makeText(getActivity(), "permission Granted", Toast.LENGTH_LONG).show();
-                    }
-
-                } else {
-
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
-                    AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-                    //Source of the data in the Dialog
-
-                    // Set the dialog title
-                    builder.setTitle("Location Error")
-                            .setMessage("Cannot continue without Location Enabled")
-                            // Set the action buttons
-                            .setNeutralButton("Close App", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int id) {
-                                    getActivity().finish();
-                                    System.exit(0);
-                                }
-                            });
-
-                    AlertDialog alert = builder.create();
-                    alert.show();
-                }
-                return;
+                Log.i("MapsActivity", "This will clear the line");
             }
+            mline = mGoogleMap.addPolyline(new PolylineOptions()
+                    .add(new LatLng(clicked_lat, clicked_lon), new LatLng(current_lat, current_lon))
+                    .width(12)
+                    .color(Color.RED));
 
+            calc_distance();
         }
     }
+
+
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        // Don't know why defining this LocationSettingsStates,it's never used and causing the exception
+       // final LocationSettingsStates states = LocationSettingsStates.fromIntent(data);
 
-        final LocationSettingsStates states = LocationSettingsStates.fromIntent(data);
         switch (requestCode) {
             case 999:
                 switch (resultCode) {
@@ -419,7 +427,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
                         break;
                     case Activity.RESULT_CANCELED:
-                        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.getActivity());
                         //Source of the data in the Dialog
 
                         // Set the dialog title
@@ -429,7 +437,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
                                 .setNeutralButton("Close App", new DialogInterface.OnClickListener() {
                                     @Override
                                     public void onClick(DialogInterface dialog, int id) {
-                                        getActivity().finish();
+                                        MainActivity.getActivity().finish();
                                         System.exit(0);
                                     }
                                 });

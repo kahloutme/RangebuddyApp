@@ -1,6 +1,8 @@
 package me.kahlout.rangebuddy;
 
+import android.app.Activity;
 import android.content.Intent;
+import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
@@ -12,6 +14,7 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 
+import android.util.Log;
 import android.view.MenuItem;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
@@ -22,6 +25,7 @@ public class MainActivity extends AppCompatActivity
     Toolbar mToolbar;
     DrawerLayout mDrawer;
     NavigationView mNavigationView;
+    public static Activity mActivity;
 
     // Firebase Analytics
     private FirebaseAnalytics mFirebaseAnalytics;
@@ -46,9 +50,25 @@ public class MainActivity extends AppCompatActivity
 
         // Obtain the FirebaseAnalytics instance.
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
+        mActivity = this;
 
         /// Set first screen
         displaySelectedScreen(R.id.nav_map);
+    }
+    //in the mActivity we store the activity we have in OnCreate method and use this variable in the project instead of using getContext(),getActivity() etc.
+    public static Activity getActivity(){
+
+        return mActivity;
+    }
+    //Here we add onResume which will be called each time you minimize and maximize the app. It will check if the mActivity is not null and assign the current Activity.
+    //Sometimes after minimizing the app system can kill some variables for RAM economy purposes, So recently defined mActivity can become null.
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if(mActivity==null)
+        {
+            mActivity = MainActivity.this;
+        }
     }
 
     @Override
@@ -111,10 +131,6 @@ public class MainActivity extends AppCompatActivity
     }
 
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
