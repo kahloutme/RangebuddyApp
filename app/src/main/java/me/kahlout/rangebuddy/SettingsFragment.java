@@ -6,8 +6,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -37,11 +37,12 @@ public class SettingsFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_settings, container, false);
 
         // Create instance of TinyDB
-        tinydb = new TinyDB(getContext());
+//        tinydb = new TinyDB(getContext());
+        tinydb = new TinyDB(MainActivity.getActivity());
 
         mListView = (ListView) view.findViewById(R.id.SettingListView);
         String[] myKeys = getResources().getStringArray(R.array.listviewSettings);
-        mListView.setAdapter(new ArrayAdapter<String>(getContext(), android.R.layout.simple_list_item_1, myKeys));
+        mListView.setAdapter(new ArrayAdapter<String>(MainActivity.getActivity(), android.R.layout.simple_list_item_1, myKeys));
 
 
         return view;
@@ -53,7 +54,7 @@ public class SettingsFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         //you can set the title for your toolbar here for different fragments different titles
-        getActivity().setTitle("Settings");
+        MainActivity.getActivity().setTitle("Settings");
 
         mUnits = tinydb.getIntUnits("UnitsToUse");
         mZoom = tinydb.getBoolean("ZoomLock");
@@ -70,7 +71,7 @@ public class SettingsFragment extends Fragment {
                     case 0: /// Units for Distance
 
 
-                        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.getActivity());
                         //Source of the data in the DIalog
                         final CharSequence[] array = {"Yards", "Meters"};
 
@@ -111,7 +112,7 @@ public class SettingsFragment extends Fragment {
 
                     case 1: //  Zoom Locked
 
-                        AlertDialog.Builder builderZoom = new AlertDialog.Builder(getContext());
+                        AlertDialog.Builder builderZoom = new AlertDialog.Builder(MainActivity.getActivity());
                         //Source of the data in the Dialog
                         final CharSequence[] arrayZoom = {"Locked", "Unlocked"};
 

@@ -14,9 +14,9 @@ import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Looper;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
-import android.support.v4.content.ContextCompat;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.core.content.ContextCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -133,7 +133,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         super.onViewCreated(view, savedInstanceState);
 
         //you can set the title for your toolbar here for different fragments different titles
-        getActivity().setTitle("RangeBuddy");
+        MainActivity.getActivity().setTitle("RangeBuddy");
 
         // Create instance of TinyDB
         tinydb = new TinyDB(getContext());
@@ -166,7 +166,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
                 .addLocationRequest(mLocationRequest);
         Task<LocationSettingsResponse> result =
-                LocationServices.getSettingsClient(getActivity()).checkLocationSettings(builder.build());
+                LocationServices.getSettingsClient(MainActivity.getActivity()).checkLocationSettings(builder.build());
 
         result.addOnCompleteListener(new OnCompleteListener<LocationSettingsResponse>() {
             @Override
@@ -228,7 +228,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         LocationSettings();
 
         if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (ContextCompat.checkSelfPermission(getActivity(),
+            if (ContextCompat.checkSelfPermission(MainActivity.getActivity(),
                     Manifest.permission.ACCESS_FINE_LOCATION)
                     == PackageManager.PERMISSION_GRANTED) {
                 //Location Permission already granted
@@ -328,7 +328,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
                     mLocationFirstUpdate = true;
                 }
 
-
                 Log.i("MapsActivity", "Location: " + location.getLatitude() + " " + location.getLongitude());
             }
         }
@@ -347,7 +346,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
 
     private void checkLocationPermission() {
-        if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION)
+        if (ContextCompat.checkSelfPermission(MainActivity.getActivity(), Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
 
             requestPermissions(
@@ -358,53 +357,51 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     }
 
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           String permissions[], int[] grantResults) {
-        switch (requestCode) {
-            case MY_PERMISSIONS_REQUEST_LOCATION: {
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
-                    // permission was granted, yay! Do the
-                    // location-related task you need to do.
-                    if (ContextCompat.checkSelfPermission(getActivity(),
-                            Manifest.permission.ACCESS_FINE_LOCATION)
-                            == PackageManager.PERMISSION_GRANTED) {
-
-                        mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
-                        mGoogleMap.setMyLocationEnabled(true);
-                        Toast.makeText(getActivity(), "permission Granted", Toast.LENGTH_LONG).show();
-                    }
-
-                } else {
-
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
-                    AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-                    //Source of the data in the Dialog
-
-                    // Set the dialog title
-                    builder.setTitle("Location Error")
-                            .setMessage("Cannot continue without Location Enabled")
-                            // Set the action buttons
-                            .setNeutralButton("Close App", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int id) {
-                                    getActivity().finish();
-                                    System.exit(0);
-                                }
-                            });
-
-                    AlertDialog alert = builder.create();
-                    alert.show();
-                }
-                return;
-            }
-
-        }
-    }
+//    @Override
+//    public void onRequestPermissionsResult(int requestCode,
+//                                           String permissions[], int[] grantResults) {
+//        switch (requestCode) {
+//            case MY_PERMISSIONS_REQUEST_LOCATION: {
+//                // If request is cancelled, the result arrays are empty.
+//                if (grantResults.length > 0
+//                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+//
+//                    // permission was granted, yay! Do the
+//                    // location-related task you need to do.
+//                    if (ContextCompat.checkSelfPermission(MainActivity.getActivity(),
+//                            Manifest.permission.ACCESS_FINE_LOCATION)
+//                            == PackageManager.PERMISSION_GRANTED) {
+//
+//                        mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
+//                        mGoogleMap.setMyLocationEnabled(true);
+//                        Toast.makeText(getActivity(), "permission Granted", Toast.LENGTH_LONG).show();
+//                    }
+//
+//                } else {
+//
+//                    // permission denied, boo! Disable the
+//                    // functionality that depends on this permission.
+//                    AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+//                    //Source of the data in the Dialog
+//
+//                    // Set the dialog title
+//                    builder.setTitle("Location Error")
+//                            .setMessage("Cannot continue without Location Enabled")
+//                            .setNeutralButton("Close App", new DialogInterface.OnClickListener() {
+//                                @Override
+//                                public void onClick(DialogInterface dialog, int id) {
+//                                    getActivity().finish();
+//                                    System.exit(0);
+//                                }
+//                            });
+//                    AlertDialog alert = builder.create();
+//                    alert.show();
+//                }
+//                return;
+//            }
+//
+//        }
+//    }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -424,6 +421,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
                         // Set the dialog title
                         builder.setTitle("Location Error")
+                                .setCancelable(false)
                                 .setMessage("Cannot continue without Location Services Enabled")
                                 // Set the action buttons
                                 .setNeutralButton("Close App", new DialogInterface.OnClickListener() {
@@ -435,6 +433,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
                                 });
 
                         AlertDialog alert = builder.create();
+                        alert.setCanceledOnTouchOutside(false);
                         alert.show();
 
 

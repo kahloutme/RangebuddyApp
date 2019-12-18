@@ -2,8 +2,8 @@ package me.kahlout.rangebuddy;
 
 
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -46,7 +46,7 @@ public class PremiumFragment extends Fragment implements PurchasesUpdatedListene
         View view = inflater.inflate(R.layout.fragment_premium, container, false);
 
         // Create instance of TinyDB
-        tinydb = new TinyDB(getContext());
+        tinydb = new TinyDB(MainActivity.getActivity());
         mPremium = tinydb.getBoolean("Premium");
 
         // Button
@@ -54,7 +54,7 @@ public class PremiumFragment extends Fragment implements PurchasesUpdatedListene
 
 
         // Establish connection to billing client
-        mBillingClient = BillingClient.newBuilder(getContext()).setListener(this).build();
+        mBillingClient = BillingClient.newBuilder(MainActivity.getActivity()).setListener(this).build();
 
         // Connect to billing server
         mBillingClient.startConnection(new BillingClientStateListener() {
@@ -71,7 +71,8 @@ public class PremiumFragment extends Fragment implements PurchasesUpdatedListene
             @Override
             public void onBillingServiceDisconnected() {
                 //TODO implement your own retry policy
-                Toast.makeText(getContext(), getResources().getString(R.string.billing_connection_failure), Toast.LENGTH_SHORT);
+//                Toast.makeText(getContext(), getResources().getString(R.string.billing_connection_failure), Toast.LENGTH_SHORT);
+                Toast.makeText(getContext(), App.getContext().getString(R.string.billing_connection_failure), Toast.LENGTH_SHORT);
                 // Try to restart the connection on the next request to
                 // Google Play by calling the startConnection() method.
 //                queryPrefPurchases();
@@ -88,7 +89,7 @@ public class PremiumFragment extends Fragment implements PurchasesUpdatedListene
         super.onViewCreated(view, savedInstanceState);
 
         //you can set the title for your toolbar here for different fragments different titles
-        getActivity().setTitle("Premium");
+        MainActivity.getActivity().setTitle("Premium");
 
         mBuyButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -99,7 +100,7 @@ public class PremiumFragment extends Fragment implements PurchasesUpdatedListene
                         .setSku(ITEM_SKU_ADREMOVAL)
                         .setType(BillingClient.SkuType.INAPP)
                         .build();
-                int responseCode = mBillingClient.launchBillingFlow(getActivity(), flowParams);
+                int responseCode = mBillingClient.launchBillingFlow(MainActivity.getActivity(), flowParams);
             }
         });
 
