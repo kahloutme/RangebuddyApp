@@ -1,9 +1,15 @@
 package me.kahlout.rangebuddy;
 
+import android.Manifest;
 import android.content.Intent;
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
+
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import com.google.android.material.navigation.NavigationView;
 import androidx.core.view.GravityCompat;
@@ -28,6 +34,8 @@ public class MainActivity extends AppCompatActivity
     // Firebase Analytics
     private FirebaseAnalytics mFirebaseAnalytics;
 
+    // new variables
+    public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,7 +58,23 @@ public class MainActivity extends AppCompatActivity
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
 
         /// Set first screen
-        displaySelectedScreen(R.id.nav_map);
+//        displaySelectedScreen(R.id.nav_map);
+
+        // - New update - check if we have permission before proceeding to nav.
+
+        boolean perGranted;
+        perGranted = checkLocationPermission();
+        if(perGranted)
+
+            displaySelectedScreen(R.id.nav_map);
+
+            else {
+
+            displaySelectedScreen(R.id.nav_perm);
+        }
+
+        // - New update - check if we have permission before proceeding to nav.
+
 
         // Set Activity
         mActivity = this;
@@ -113,9 +137,11 @@ public class MainActivity extends AppCompatActivity
             case R.id.nav_premium:
                 myFragment = new PremiumFragment();
                 break;
-
             case R.id.nav_settings:
                 myFragment = new SettingsFragment();
+                break;
+            case R.id.nav_perm:
+                myFragment = new PermFragment();
                 break;
         }
 
@@ -135,6 +161,11 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        Fragment frg = getSupportFragmentManager().findFragmentById(R.id.content_frame);
+        if (frg != null) {
+            frg.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        }
     }
 
     @Override
@@ -163,5 +194,16 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
+    /// Do we have location?
+    private boolean checkLocationPermission() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            return false;
+        }
+        else  {
+            return true;
+        }
+    }
 
 }

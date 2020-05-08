@@ -64,14 +64,12 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
     // location variables
 
-    GoogleMap mGoogleMap;
-    SupportMapFragment mapFrag;
-    LocationRequest mLocationRequest;
-    Location mLastLocation;
-    FusedLocationProviderClient mFusedLocationClient;
+    private GoogleMap mGoogleMap;
+    private SupportMapFragment mapFrag;
+    private  LocationRequest mLocationRequest;
+    private Location mLastLocation;
+    private FusedLocationProviderClient mFusedLocationClient;
 
-    // Settings variables
-    public boolean mSettings;
 
     ////Ad
     private AdView mAdView;
@@ -117,7 +115,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         mClearButton = view.findViewById(R.id.Clear_Button);
         mTextView = view.findViewById(R.id.Distance_Text);
 
-        ///Ad Testing
+        ///Ad Testingq
         mAdView = view.findViewById(R.id.adView);
         AdRequest adRequest = new AdRequest.Builder()
 //                .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
@@ -156,60 +154,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
             }
         }
 
-        // TODO: 19/03/2019 Add a Change log record
-
-
-    }
-
-    public boolean LocationSettings() {
-        mSettings = false;
-        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
-                .addLocationRequest(mLocationRequest);
-        Task<LocationSettingsResponse> result =
-                LocationServices.getSettingsClient(MainActivity.getActivity()).checkLocationSettings(builder.build());
-
-        result.addOnCompleteListener(new OnCompleteListener<LocationSettingsResponse>() {
-            @Override
-            public void onComplete(Task<LocationSettingsResponse> task) {
-                try {
-                    LocationSettingsResponse response = task.getResult(ApiException.class);
-                    // All location settings are satisfied.
-                    mSettings = true;
-
-
-                } catch (ApiException exception) {
-                    switch (exception.getStatusCode()) {
-                        case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
-                            // Location settings are not satisfied. But could be fixed by showing the
-                            // user a dialog.
-                            Toast.makeText(getActivity(), "Resolution required!", Toast.LENGTH_LONG).show();
-
-                            try {
-                                // Cast to a resolvable exception.
-                                ResolvableApiException resolvable = (ResolvableApiException) exception;
-                                // Show the dialog by calling startResolutionForResult(),
-                                // and check the result in onActivityResult().
-                                // Note: Comes back to MainActivity Results first.
-                                resolvable.startResolutionForResult(getActivity(), 999);
-                            } catch (IntentSender.SendIntentException e) {
-                                // Ignore the error.
-                            } catch (ClassCastException e) {
-                                // Ignore, should be an impossible error.
-                            }
-                            break;
-
-                        case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
-                            // Location settings are not satisfied. However, we have no way to fix the
-                            // settings so we won't show the dialog.
-                            mSettings = false;
-
-                            break;
-                    }
-                }
-            }
-        });
-
-        return mSettings;
 
     }
 
@@ -218,31 +162,14 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     public void onMapReady(GoogleMap googleMap) {
         mGoogleMap = googleMap;
         mGoogleMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
+
         mLocationRequest = new LocationRequest();
         mLocationRequest.setInterval(5000); // 5 second interval for highest accuracy
         mLocationRequest.setFastestInterval(5000);
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
-
-        /// Check location settings
-        LocationSettings();
-
-        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (ContextCompat.checkSelfPermission(MainActivity.getActivity(),
-                    Manifest.permission.ACCESS_FINE_LOCATION)
-                    == PackageManager.PERMISSION_GRANTED) {
-                //Location Permission already granted
-                mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
-                mGoogleMap.setMyLocationEnabled(true);
-            } else {
-                //Request Location Permission
-                checkLocationPermission();
-
-            }
-        } else {
-            mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
-            mGoogleMap.setMyLocationEnabled(true);
-        }
+        mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
+        mGoogleMap.setMyLocationEnabled(true);
 
 
         /// We are now actually ready at this point
@@ -345,104 +272,10 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     }
 
 
-    private void checkLocationPermission() {
-        if (ContextCompat.checkSelfPermission(MainActivity.getActivity(), Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-
-            requestPermissions(
-                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                    MY_PERMISSIONS_REQUEST_LOCATION);
-
-        }
-    }
-
-
-//    @Override
-//    public void onRequestPermissionsResult(int requestCode,
-//                                           String permissions[], int[] grantResults) {
-//        switch (requestCode) {
-//            case MY_PERMISSIONS_REQUEST_LOCATION: {
-//                // If request is cancelled, the result arrays are empty.
-//                if (grantResults.length > 0
-//                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-//
-//                    // permission was granted, yay! Do the
-//                    // location-related task you need to do.
-//                    if (ContextCompat.checkSelfPermission(MainActivity.getActivity(),
-//                            Manifest.permission.ACCESS_FINE_LOCATION)
-//                            == PackageManager.PERMISSION_GRANTED) {
-//
-//                        mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
-//                        mGoogleMap.setMyLocationEnabled(true);
-//                        Toast.makeText(getActivity(), "permission Granted", Toast.LENGTH_LONG).show();
-//                    }
-//
-//                } else {
-//
-//                    // permission denied, boo! Disable the
-//                    // functionality that depends on this permission.
-//                    AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-//                    //Source of the data in the Dialog
-//
-//                    // Set the dialog title
-//                    builder.setTitle("Location Error")
-//                            .setMessage("Cannot continue without Location Enabled")
-//                            .setNeutralButton("Close App", new DialogInterface.OnClickListener() {
-//                                @Override
-//                                public void onClick(DialogInterface dialog, int id) {
-//                                    getActivity().finish();
-//                                    System.exit(0);
-//                                }
-//                            });
-//                    AlertDialog alert = builder.create();
-//                    alert.show();
-//                }
-//                return;
-//            }
-//
-//        }
-//    }
-
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        final LocationSettingsStates states = LocationSettingsStates.fromIntent(data);
-        switch (requestCode) {
-            case 999:
-                switch (resultCode) {
-                    case Activity.RESULT_OK:
-                        // All required changes were successfully made
-
-                        break;
-                    case Activity.RESULT_CANCELED:
-                        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-                        //Source of the data in the Dialog
-
-                        // Set the dialog title
-                        builder.setTitle("Location Error")
-                                .setCancelable(false)
-                                .setMessage("Cannot continue without Location Services Enabled")
-                                // Set the action buttons
-                                .setNeutralButton("Close App", new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int id) {
-                                        getActivity().finish();
-                                        System.exit(0);
-                                    }
-                                });
-
-                        AlertDialog alert = builder.create();
-                        alert.setCanceledOnTouchOutside(false);
-                        alert.show();
-
-
-                        break;
-                    default:
-                        break;
-                }
-                break;
-        }
     }
 
 
