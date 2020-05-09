@@ -133,7 +133,6 @@ public class MainActivity extends AppCompatActivity
             case R.id.nav_map:
                 myFragment = new MapFragment();
                 break;
-
             case R.id.nav_premium:
                 myFragment = new PremiumFragment();
                 break;
@@ -184,6 +183,18 @@ public class MainActivity extends AppCompatActivity
 
     }
 
+    /// Do we have location?
+    public boolean checkLocationPermission() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            return false;
+        }
+        else  {
+            return true;
+        }
+    }
+
     //// Relevant but not used methods
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
@@ -194,16 +205,6 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
-    /// Do we have location?
-    private boolean checkLocationPermission() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
 
-            return false;
-        }
-        else  {
-            return true;
-        }
-    }
 
 }

@@ -19,6 +19,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -26,6 +27,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
@@ -54,6 +56,7 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
 import java.util.List;
+import java.util.Objects;
 
 import me.kahlout.rangebuddy.Libraries.DistanceMath;
 import me.kahlout.rangebuddy.Libraries.TinyDB;
@@ -67,10 +70,13 @@ public class PermFragment extends Fragment {
 
     LocationRequest mLocationRequest;
 
+    private Button MapReturn;
+
+    private CheckBox mcheckboxSettings;
+    private CheckBox mcheckboxLocation;
 
     // Settings variables
-    public boolean mSettings;
-
+    private boolean mSettings;
 
 
     @Nullable
@@ -79,6 +85,21 @@ public class PermFragment extends Fragment {
 
 
         View view = inflater.inflate(R.layout.fragment_perm, null, false);
+        MapReturn = view.findViewById(R.id.mapreturn);
+        MapReturn.setEnabled(false);
+
+        mcheckboxSettings = view.findViewById(R.id.checkBox_settings);
+        mcheckboxSettings.setChecked(false);
+
+        mcheckboxLocation = view.findViewById(R.id.checkBox_permission);
+        mcheckboxLocation.setChecked(false);
+
+        /// define settings we are looking for:
+        mLocationRequest = new LocationRequest();
+        mLocationRequest.setInterval(5000); // 5 second interval for highest accuracy
+        mLocationRequest.setFastestInterval(5000);
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+
         return view;
     }
 
@@ -87,11 +108,21 @@ public class PermFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         //you can set the title for your toolbar here for different fragments different titles
-        MainActivity.getActivity().setTitle("Set Permission");
-
+        MainActivity.getActivity().setTitle("Check Permission");
 
         /// Check location settings
         LocationSettings();
+
+        MapReturn.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+
+                int id = R.id.nav_map;
+                ((MainActivity) Objects.requireNonNull(getActivity())).displaySelectedScreen(id);
+
+            }
+        });
 
 
     }
@@ -110,6 +141,7 @@ public class PermFragment extends Fragment {
                     LocationSettingsResponse response = task.getResult(ApiException.class);
                     // All location settings are satisfied.
                     mSettings = true;
+                    mcheckboxSettings.setChecked(true);
                     RealPermission();
 
 
@@ -166,6 +198,8 @@ public class PermFragment extends Fragment {
                 switch (resultCode) {
                     case Activity.RESULT_OK:
                         mSettings = true;
+                        mcheckboxSettings.setChecked(true);
+                        RealPermission();
 
                         break;
                     case Activity.RESULT_CANCELED:
@@ -207,7 +241,8 @@ public class PermFragment extends Fragment {
 
         if(grantResults[0] == 0){
 
-            /// change button to ready
+            MapReturn.setEnabled(true);
+            mcheckboxLocation.setChecked(true);
         }
         else {
           //  accept permission

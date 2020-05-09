@@ -3,12 +3,46 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:id="@+id/Layout1"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="10dp"
+        android:weightSum="1">
+
+        <CheckBox
+            android:id="@+id/checkBox_settings"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Location Settings" />
+
+        <CheckBox
+            android:id="@+id/checkBox_permission"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Location Permissions" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:id="@+id/Layout2"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="50dp"
+        android:weightSum="2">
     <Button
-        android:id="@+id/permbutton"
+        android:id="@+id/mapreturn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="10dp"
-        android:layout_marginTop="25dp"
-        android:text="@string/permission" />
+
+        android:text="@string/start_map" />
+
+
+</LinearLayout>
 
 </RelativeLayout>

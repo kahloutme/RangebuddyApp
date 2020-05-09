@@ -1,40 +1,32 @@
 package me.kahlout.rangebuddy;
 
-import android.Manifest;
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentSender;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Looper;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.core.content.ContextCompat;
+
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.common.api.ApiException;
-import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResponse;
-import com.google.android.gms.location.LocationSettingsStates;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -53,6 +45,7 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
 import java.util.List;
+import java.util.Objects;
 
 import me.kahlout.rangebuddy.Libraries.DistanceMath;
 import me.kahlout.rangebuddy.Libraries.TinyDB;
@@ -99,6 +92,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     // Do we have location?
     boolean mLocationFirstUpdate = false;
 
+    boolean permissionGranted = false;
+    boolean locationActive = false;
+
 
     @Nullable
     @Override
@@ -115,7 +111,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         mClearButton = view.findViewById(R.id.Clear_Button);
         mTextView = view.findViewById(R.id.Distance_Text);
 
-        ///Ad Testingq
+        ///Ad Testing
         mAdView = view.findViewById(R.id.adView);
         AdRequest adRequest = new AdRequest.Builder()
 //                .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
@@ -136,6 +132,14 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         // Create instance of TinyDB
         tinydb = new TinyDB(getContext());
 
+        mLocationRequest = new LocationRequest();
+        mLocationRequest.setInterval(5000); // 5 second interval for highest accuracy
+        mLocationRequest.setFastestInterval(5000);
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+
+        LocationSettings();
+        permissionGranted = ((MainActivity) Objects.requireNonNull(getActivity())).checkLocationPermission();
+
 
         // Create Marker icon
         int height = 100;
@@ -154,25 +158,61 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
             }
         }
 
+    }
 
+    public void LocationSettings() {
+        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
+                .addLocationRequest(mLocationRequest);
+        Task<LocationSettingsResponse> result =
+                LocationServices.getSettingsClient(MainActivity.getActivity()).checkLocationSettings(builder.build());
+
+        result.addOnCompleteListener(new OnCompleteListener<LocationSettingsResponse>() {
+            @Override
+            public void onComplete(Task<LocationSettingsResponse> task) {
+                try {
+                    LocationSettingsResponse response = task.getResult(ApiException.class);
+                    // All location settings are satisfied.
+                    locationActive = true;
+                    onMapReady(mGoogleMap);
+
+
+                } catch (ApiException exception) {
+                    switch (exception.getStatusCode()) {
+                        case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+                            locationActive = false;
+                            break;
+
+
+                        case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+                            // Location settings are not satisfied. However, we have no way to fix the
+                            // settings so we won't show the dialog.
+                            locationActive = false;
+                            showError();
+                            break;
+                    }
+                }
+            }
+        });
     }
 
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
+
         mGoogleMap = googleMap;
         mGoogleMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
 
-        mLocationRequest = new LocationRequest();
-        mLocationRequest.setInterval(5000); // 5 second interval for highest accuracy
-        mLocationRequest.setFastestInterval(5000);
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        if(!permissionGranted | !locationActive) {
+
+            // we can do nothing!
+
+        }
+        else {
 
         mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
         mGoogleMap.setMyLocationEnabled(true);
 
 
-        /// We are now actually ready at this point
 
         mClearButton.setOnClickListener(new View.OnClickListener() {
 
@@ -238,6 +278,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
             }
         });
 
+        }
     }
 
 
@@ -268,13 +309,37 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         LatLng latLng = new LatLng(currentLatitude, currentLongitude);
         mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 17f));
 
+    }
 
+    public void showError(){
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        //Source of the data in the Dialog
+
+        // Set the dialog title
+        builder.setTitle("Location Error")
+                .setCancelable(false)
+                .setMessage("Cannot continue without Location Services Enabled")
+                // Set the action buttons
+                .setNeutralButton("Fix Permissions", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int id) {
+
+                        int mapid = R.id.nav_perm;
+                        ((MainActivity) Objects.requireNonNull(getActivity())).displaySelectedScreen(mapid);
+                    }
+                });
+
+        AlertDialog alert = builder.create();
+        alert.setCanceledOnTouchOutside(false);
+        alert.show();
     }
 
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+
 
     }
 
