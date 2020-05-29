@@ -137,10 +137,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         mLocationRequest.setFastestInterval(5000);
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
-        LocationSettings();
-        permissionGranted = ((MainActivity) Objects.requireNonNull(getActivity())).checkLocationPermission();
-
-
         // Create Marker icon
         int height = 100;
         int width = 100;
@@ -160,41 +156,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
     }
 
-    public void LocationSettings() {
-        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
-                .addLocationRequest(mLocationRequest);
-        Task<LocationSettingsResponse> result =
-                LocationServices.getSettingsClient(MainActivity.getActivity()).checkLocationSettings(builder.build());
-
-        result.addOnCompleteListener(new OnCompleteListener<LocationSettingsResponse>() {
-            @Override
-            public void onComplete(Task<LocationSettingsResponse> task) {
-                try {
-                    LocationSettingsResponse response = task.getResult(ApiException.class);
-                    // All location settings are satisfied.
-                    locationActive = true;
-                    onMapReady(mGoogleMap);
-
-
-                } catch (ApiException exception) {
-                    switch (exception.getStatusCode()) {
-                        case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
-                            locationActive = false;
-                            break;
-
-
-                        case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
-                            // Location settings are not satisfied. However, we have no way to fix the
-                            // settings so we won't show the dialog.
-                            locationActive = false;
-                            showError();
-                            break;
-                    }
-                }
-            }
-        });
-    }
-
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
@@ -202,83 +163,87 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         mGoogleMap = googleMap;
         mGoogleMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
 
-        if(!permissionGranted | !locationActive) {
-
-            // we can do nothing!
-
-        }
-        else {
-
-        mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
-        mGoogleMap.setMyLocationEnabled(true);
+            mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
+            mGoogleMap.setMyLocationEnabled(true);
 
 
 
-        mClearButton.setOnClickListener(new View.OnClickListener() {
+            mClearButton.setOnClickListener(new View.OnClickListener() {
 
-            @Override
-            public void onClick(View v) {
+                @Override
+                public void onClick(View v) {
 
-                if (mline != null) {
-                    mline.remove();
-                    mEndMarker.remove();
-                    mline = null;
-                    mTextView.setText("0");
+                    if (mline != null) {
+                        mline.remove();
+                        mEndMarker.remove();
+                        mline = null;
+                        mTextView.setText("0");
 
-                    Log.i("MapsActivity", "This will clear the line");
+                        Log.i("MapsActivity", "This will clear the line");
+                    }
+                }
+            });
+
+
+            mGoogleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+
+                @Override
+                public void onMapClick(LatLng clickCoords) {
+
+
+
+                    mClearButton.performClick();
+
+                    try {
+
+                    mline = mGoogleMap.addPolyline(new PolylineOptions()
+                            .add(new LatLng(clickCoords.latitude, clickCoords.longitude), new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude()))
+                            .width(12)
+                            .color(Color.RED));
+
+
+
+                    String S = "String";
+
+                    mEndMarker = mGoogleMap.addMarker(new MarkerOptions()
+                            .position(new LatLng(clickCoords.latitude, clickCoords.longitude))
+                            .icon(BitmapDescriptorFactory.fromBitmap(MarkerIcon))
+
+                    );
+
+
+                    Log.i("MapsActivity", "Polyline added at " + clickCoords.latitude + " " + clickCoords.longitude);
+
+                    mUnits = tinydb.getIntUnits("UnitsToUse");
+
+                    if (mUnits == 0) {
+
+                        double calculatedDistance = DistanceMath.distanceYards(mLastLocation.getLatitude(), clickCoords.latitude, mLastLocation.getLongitude(), clickCoords.longitude, 0, 0);
+                        int DisplayDistance = (int) calculatedDistance;
+
+                        mTextView = (TextView) getView().findViewById(R.id.Distance_Text);
+                        mTextView.setText(DisplayDistance + "yd");
+
+
+                    } else {
+
+                        double calculatedDistance = DistanceMath.distanceMeters(mLastLocation.getLatitude(), clickCoords.latitude, mLastLocation.getLongitude(), clickCoords.longitude, 0, 0);
+                        int DisplayDistance = (int) calculatedDistance;
+
+                        mTextView = (TextView) getView().findViewById(R.id.Distance_Text);
+                        mTextView.setText(DisplayDistance + "m");
+
+
+                    }
+
+                } catch (Exception e) {
+                    // This will catch any exception, because they are all descended from Exception
+                    Log.i("MapsActivity", "EXCEPTION CAUGHT!");
+                    showError();
                 }
             }
-        });
+            });
 
-
-        mGoogleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
-
-            @Override
-            public void onMapClick(LatLng clickCoords) {
-
-                mClearButton.performClick();
-
-                mline = mGoogleMap.addPolyline(new PolylineOptions()
-                        .add(new LatLng(clickCoords.latitude, clickCoords.longitude), new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude()))
-                        .width(12)
-                        .color(Color.RED));
-
-                String S = "String";
-
-                mEndMarker = mGoogleMap.addMarker(new MarkerOptions()
-                        .position(new LatLng(clickCoords.latitude, clickCoords.longitude))
-                        .icon(BitmapDescriptorFactory.fromBitmap(MarkerIcon))
-
-                );
-
-
-                Log.i("MapsActivity", "Polyline added at " + clickCoords.latitude + " " + clickCoords.longitude);
-
-                mUnits = tinydb.getIntUnits("UnitsToUse");
-
-                if (mUnits == 0) {
-
-                    double calculatedDistance = DistanceMath.distanceYards(mLastLocation.getLatitude(), clickCoords.latitude, mLastLocation.getLongitude(), clickCoords.longitude, 0, 0);
-                    int DisplayDistance = (int) calculatedDistance;
-
-                    mTextView = (TextView) getView().findViewById(R.id.Distance_Text);
-                    mTextView.setText(DisplayDistance + "yd");
-
-
-                } else {
-
-                    double calculatedDistance = DistanceMath.distanceMeters(mLastLocation.getLatitude(), clickCoords.latitude, mLastLocation.getLongitude(), clickCoords.longitude, 0, 0);
-                    int DisplayDistance = (int) calculatedDistance;
-
-                    mTextView = (TextView) getView().findViewById(R.id.Distance_Text);
-                    mTextView.setText(DisplayDistance + "m");
-
-
-                }
-            }
-        });
-
-        }
     }
 
 
